@@ -5,10 +5,10 @@ const http = require('http');
 Prometheus.collectDefaultMetrics();
 
 const requestHistogram = new Prometheus.Histogram({
-    name: 'http_request_duration_seconds',
-    help: 'Duration of HTTP requests in seconds',
-    labelNames: ['code', 'handler', 'method'],
-    buckets: [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5]
+  name: 'http_request_duration_seconds',
+  help: 'Duration of HTTP requests in seconds',
+  labelNames: ['code', 'handler', 'method'],
+  buckets: [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5]
 })
 
 const requestTimer = (req, res, next) => {
@@ -33,12 +33,22 @@ const PRODUCTION = app.get('env') === 'production';
 
 // Administrative routes are not timed or logged, but for non-admin routes, pino
 // overhead is included in timing.
-app.get('/ready', (req, res) => res.status(200).json({status:"ok"}));
-app.get('/live', (req, res) => res.status(200).json({status:"ok"}));
+app.get('/ready', (req, res) => res.status(200).json({ status: "ok" }));
+app.get('/live', (req, res) => res.status(200).json({ status: "ok" }));
 app.get('/metrics', (req, res, next) => {
   res.set('Content-Type', Prometheus.register.contentType)
   res.end(Prometheus.register.metrics())
-})
+});
+
+app.get('/ping/:info', (req, res) => {
+  let param = req.params.info;
+  let id = req.query.id;
+  return res.status(200).json({
+    status: "ok",
+    param: param,
+    id: id
+  });
+});
 
 // Time routes after here.
 app.use(requestTimer);
@@ -47,11 +57,11 @@ app.use(requestTimer);
 const pino = require('pino')({
   level: PRODUCTION ? 'info' : 'debug',
 });
-app.use(require('pino-http')({logger: pino}));
+app.use(require('pino-http')({ logger: pino }));
 
 app.get('/', (req, res) => {
   // Use req.log (a `pino` instance) to log JSON:
-  req.log.info({message: 'Hello from Node.js Starter Application!'});
+  req.log.info({ message: 'Hello from Node.js Starter Application!' });
   res.send('Hello from Node.js Starter Application!');
 });
 
